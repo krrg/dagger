@@ -1,0 +1,26 @@
+{
+  "name": "dagger",
+  "version": "0.0.1",
+  "description": "io.js server implementing a DAG based permissions model",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krrg/dagger.git"
+  },
+  "author": "Ken Reese",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/krrg/dagger/issues"
+  },
+  "homepage": "https://github.com/krrg/dagger#readme",
+  "dependencies": {
+    "express": "^4.13.1",
+    "lodash": "^3.10.0",
+    "redis": "^0.12.1",
+    "then-redis": "^1.3.0",
+    "when": "^3.7.3"
+  }
+}
