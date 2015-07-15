@@ -9,11 +9,11 @@ var db = require('./db');
 
 var Graph = (function(){
 
-  var createTokenId = es6gen.lift(function* () {
+  var createToken = es6gen.lift(function* () {
     return 'token:' + (yield __gen_rand_bytes__());
   })
 
-  var createLinkId = es6gen.lift(function* () {
+  var __createLinkId__ = es6gen.lift(function* () {
     return 'link:' + (yield __gen_rand_bytes__());
   })
 
@@ -24,7 +24,7 @@ var Graph = (function(){
       })
   }
 
-  var unlink = es6gen.lift(function*(U, V, action) {
+  var destroyLink = es6gen.lift(function*(U, V, action) {
     if (! (yield db.hexists(U, V))) {
       return;
     }
@@ -36,17 +36,17 @@ var Graph = (function(){
     }
   })
 
-  var link = es6gen.lift(function* (U, V, action) {
+  var createLink = es6gen.lift(function* (U, V, action) {
     if (U === V) {
       return when.reject(new Error("Cannot create a cyclic permission chain to myself"))
     }
 
-    if (yield pathExistsBetween(V, U, action)) {
+    if (yield pathExists(V, U, action)) {
       return when.reject(new Error("Cannot create a cyclic permission chain!"))
     }
 
     if (! (yield db.hexists(U, V))) {
-      yield db.hset(U, V, (yield createLinkId()));
+      yield db.hset(U, V, (yield __createLinkId__()));
     }
 
     var link_id = yield db.hget(U, V);
@@ -55,7 +55,7 @@ var Graph = (function(){
     return true;  // It is desirable to return a truthy value in the promise.
   })
 
-  var pathExistsBetween = es6gen.lift(function* (U, V, action) {
+  var pathExists = es6gen.lift(function* (U, V, action) {
 
     var child_hash = yield db.hgetall(U);
 
@@ -65,8 +65,10 @@ var Graph = (function(){
     for (var child_key in child_hash) {
       var child_link_id = child_hash[child_key];
 
-      if (! (yield db.sismember(child_link_id, undefined)) &&
-          ! (yield db.sismember(child_link_id, action))) {
+      if (! _.any(yield when.all([
+        yield db.sismember(child_link_id, undefined),
+        yield db.sismember(child_link_id, action)
+      ]))) {
         continue;
       }
 
@@ -75,7 +77,7 @@ var Graph = (function(){
         break;
       }
 
-      if (yield pathExistsBetween(child_key, V, action)) {
+      if (yield pathExists(child_key, V, action)) {
         foundPath = true;
         break;
       }
@@ -86,10 +88,10 @@ var Graph = (function(){
 
   // TODO: Unify exported names with private names.
   return {
-    createToken: createTokenId,
-    createLink: link,
-    destroyLink: unlink,
-    pathExists: pathExistsBetween,
+    createToken: createToken,
+    createLink: createLink,
+    destroyLink: destroyLink,
+    pathExists: pathExists,
   }
 
 })();
