@@ -1,73 +1,75 @@
-var crypto = require('crypto');
-var when = require('when');
-var whenNode = require('when/node');
-var es6gen = require('when/generator');
-var _ = require('lodash');
+'use strict'
 
-var db = require('./db');
+const crypto = require('crypto');
+const when = require('when');
+const whenNode = require('when/node');
+const es6gen = require('when/generator');
+const _ = require('lodash');
+
+const db = require('./db');
 
 
-var Graph = (function(){
+const Graph = (function(){
 
-  var createToken = es6gen.lift(function* () {
-    return 'token:' + (yield __gen_rand_bytes__());
-  })
+  async function createToken() {
+    return 'token:' + (await __gen_rand_bytes__());
+  }
 
-  var __createLinkId__ = es6gen.lift(function* () {
-    return 'link:' + (yield __gen_rand_bytes__());
-  })
+  async function __createLinkId__() {
+    return 'link:' + (await __gen_rand_bytes__());
+  }
 
-  var __gen_rand_bytes__ = function () {
+  async function __gen_rand_bytes__() {
     return whenNode.call(crypto.randomBytes, 32)
       .then(function(bytes) {
         return bytes.toString('base64');
       })
   }
 
-  var destroyLink = es6gen.lift(function*(U, V, action) {
-    if (! (yield db.hexists(U, V))) {
+  async function destroyLink(U, V, action) {
+    if (! (await db.hexists(U, V))) {
       return;
     }
 
-    var link_id = yield db.hget(U, V);
-    yield db.srem(link_id, action);
-    if (yield db.scard(link_id)) {
-      yield db.hdel(U, V, action);
+    var link_id = await db.hget(U, V);
+    await db.srem(link_id, action);
+    if (await db.scard(link_id)) {
+      await db.hdel(U, V, action);
     }
-  })
+  }
 
-  var createLink = es6gen.lift(function* (U, V, action) {
+  async function createLink(U, V, action) {
     if (U === V) {
       return when.reject(new Error("Cannot create a cyclic permission chain to myself"))
     }
 
-    if (yield pathExists(V, U, action)) {
+    if (await pathExists(V, U, action)) {
       return when.reject(new Error("Cannot create a cyclic permission chain!"))
     }
 
-    if (! (yield db.hexists(U, V))) {
-      yield db.hset(U, V, (yield __createLinkId__()));
+    if (! (await db.hexists(U, V))) {
+      await db.hset(U, V, (await __createLinkId__()));
     }
 
-    var link_id = yield db.hget(U, V);
-    yield db.sadd(link_id, action);
+    const link_id = await db.hget(U, V);
+    await db.sadd(link_id, action);
 
     return true;  // It is desirable to return a truthy value in the promise.
-  })
+  }
 
-  var pathExists = es6gen.lift(function* (U, V, action) {
+  async function pathExists(U, V, action) {
 
-    var child_hash = yield db.hgetall(U);
+    let child_hash = await db.hgetall(U);
 
     // TODO: This can still be optimized further.  However, the algorithm should be correct.
-    var foundPath = false;
+    let foundPath = false;
 
-    for (var child_key in child_hash) {
-      var child_link_id = child_hash[child_key];
+    for (const child_key in child_hash) {
+      let child_link_id = child_hash[child_key];
 
-      if (! _.any(yield when.all([
-        yield db.sismember(child_link_id, undefined),
-        yield db.sismember(child_link_id, action)
+      if (! _.any(await when.all([
+        await db.sismember(child_link_id, undefined),
+        await db.sismember(child_link_id, action)
       ]))) {
         continue;
       }
@@ -77,14 +79,14 @@ var Graph = (function(){
         break;
       }
 
-      if (yield pathExists(child_key, V, action)) {
+      if (await pathExists(child_key, V, action)) {
         foundPath = true;
         break;
       }
     }
 
     return foundPath;
-  })
+  }
 
   // TODO: Unify exported names with private names.
   return {

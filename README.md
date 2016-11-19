@@ -15,3 +15,5 @@ The following is a rough sketch of the schema being used in Redis:
 
 ## Future Ideas
 A more appropriate database for this type of system might be something like [Neo4j](https://neo4j.com), as it is more optimized for modeling graphs.
+
+

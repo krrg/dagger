@@ -1,7 +1,7 @@
 
 var AppSettings = (function(){
 
-  var REDIS_HOST = "192.168.59.103";
+  var REDIS_HOST = "127.0.0.1";
   var REDIS_PORT = 6379;
 
   return {
