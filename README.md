@@ -1,5 +1,5 @@
 # dagger
-Node implementation of a DAG based permissions model.  This code requires at least Nodejs 7.  [NodeSource](https://github.com/nodesource/distributions) is a great way to get the latest Node for Linux.
+Node implementation of a DAG based permissions model.  This code requires at least Node 7.  [NodeSource](https://github.com/nodesource/distributions) is a great way to get the latest Node for Linux.
 
 ## Theoretics
 
@@ -10,7 +10,7 @@ Every token may be connected to any other token with an action --- provided that
 We want to keep the graph acyclic to eliminate confusing permissions chains that go nowhere.  
 
 ## Running the code
-Your version of Node must support `async` and `await`.  What this really means is that you can run the code with Node.js 7 (via the `--harmony` flag) or above.  The number of promises getting `await`ed is insane in the model.
+Your version of Node must support `async` and `await`.  In Node 7, you can use the `--harmony` flag.  With newer versions of Node 7 (> 7.10), the harmony flag is no longer required.  Or, you can just use Node 8 and life will be simple.
 
 You can test the model code with mocha using `npm test`.  The attached express server isn't hooked up (yet).
 
